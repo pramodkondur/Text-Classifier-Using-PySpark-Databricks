@@ -59,6 +59,7 @@ The motivation behind this project is twofold:
 2) **PySpark and Databricks**: Implementation of PySpark and Databricks as businesses utilize these tools for processing huge amounts of data and these tools help with handling and processing them.
 
 ![img](images/pydb.png)
+
 Credits: [Databricks](https://www.databricks.com/resources/ebook/maximize-your-organizations-potential-data-and-ai?scid=7018Y000001Fi1AQAS&utm_medium=paid+search&utm_source=google&utm_campaign=15418435374&utm_adgroup=130717555576&utm_content=ebook&utm_offer=maximize-your-organizations-potential-data-and-ai&utm_ad=703594935116&utm_term=databricks&gad_source=1&gbraid=0AAAAABYBeAiB5OhCYYsbYMjQEahkFsQ_8&gclid=Cj0KCQjw3vO3BhCqARIsAEWblcCfMdexHt8VdfjOLie7FXJzew7AkQdmjeicLSW2CAUU3rqJmk80dzMaAq8kEALw_wcB) & [Apache Spark](https://spark.apache.org)
 ### Why PySpark and Databricks?
 
