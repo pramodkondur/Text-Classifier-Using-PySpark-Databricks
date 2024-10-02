@@ -162,62 +162,90 @@ The dataset used in this project consists of course information from Udemy, incl
 #### TF-IDF Transformation
 - TF-IDF (Term Frequency-Inverse Document Frequency) assigns weights to the words based on their frequency and importance across documents. This helps highlight more relevant terms while diminishing the impact of common ones.
 
+
+- Using PySpark feature engineering is as follows:
+```
+# Loading Transformer and Extractor Packages in PySpark
+from pyspark.ml.feature import Tokenizer, StopWordsRemover, CountVectorizer, IDF
+
+# Pipeline Stages in PySpark
+tokenizer = Tokenizer(inputCol='course_title', outputCol='mytokens')
+stopwords_remover = StopWordsRemover(inputCol='mytokens', outputCol='filtered_tokens')
+vectorizer = CountVectorizer(inputCol='filtered_tokens', outputCol='rawFeatures')
+idf = IDF(inputCol='rawFeatures', outputCol='vectorizedFeatures')
+```
+- In scikit-learn, the same feature engineering steps can be accomplished using TfidfVectorizer, which combines tokenization, stop word removal, and TF-IDF in one step.
+```
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+vectorizer = TfidfVectorizer(stop_words='english')
+X = vectorizer.fit_transform(df['course_title'])
+```
+
 ### 3. Label Encoding
 - Label encoding converts categorical labels (course subjects) into a numerical format that machine learning algorithms can process.
+
+- Label encoding in PySpark is done using the StringIndexer.
+
+```
+from pyspark.ml.feature import StringIndexer
+
+labelEncoder = StringIndexer(inputCol='subject', outputCol='label').fit(df)
+df = labelEncoder.transform(df)
+```
+
+- In scikit-learn, label encoding can be achieved using LabelEncoder.
+
+```
+from sklearn.preprocessing import LabelEncoder
+
+labelEncoder = LabelEncoder()
+y = labelEncoder.fit_transform(df['subject'])
+```
 
 ### 4. Data Splitting
 - Splitting the dataset into training and testing subsets helps evaluate model performance on unseen data, ensuring that the model generalizes well.
 
+- Data splitting in PySpark can be done using randomSplit.
+
+```
+(trainDF, testDF) = df.randomSplit((0.7, 0.3), seed=42)
+```
+
+- In scikit-learn, data splitting is performed using train_test_split.
+```
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+```
+
 ### 5. Model Training with Logistic Regression
 - Logistic Regression is usually used for classification tasks. For multi-class classification, it can also extend to handle multiple classes through techniques like one-vs-rest, where a separate binary classifier is trained for each class. Thus, for our project we will just utilize this model for now.
 
-- **Loading Transformer and Extractor Packages in PySpark**:
-    ```python
-    from pyspark.ml.feature import Tokenizer, StopWordsRemover, CountVectorizer, IDF
-    from pyspark.ml.feature import StringIndexer
-    ```
-- **Pipeline Stages in PySpark**:
-   ```python
-   tokenizer = Tokenizer(inputCol='course_title', outputCol='mytokens')
-   stopwords_remover = StopWordsRemover(inputCol='mytokens', outputCol='filtered_tokens')
-   vectorizer = CountVectorizer(inputCol='filtered_tokens', outputCol='rawFeatures')
-   idf = IDF(inputCol='rawFeatures', outputCol='vectorizedFeatures')
-   labelEncoder = StringIndexer(inputCol='subject', outputCol='label').fit(df)
-    
-   df = labelEncoder.transform(df)
-   (trainDF, testDF) = df.randomSplit((0.7, 0.3), seed=42)
-    
-   from pyspark.ml.classification import LogisticRegression
-   lr = LogisticRegression(featuresCol='vectorizedFeatures', labelCol='label')
-    
-   from pyspark.ml import Pipeline
-   pipeline = Pipeline(stages=[tokenizer, stopwords_remover, vectorizer, idf, lr])
-    
-   lr_model = pipeline.fit(trainDF)
-    
-   predictions = lr_model.transform(testDF)
-   predictions.select('rawPrediction', 'probability', 'subject', 'label', 'prediction').show(10)
-   ```
+- Model training in PySpark involves creating a LogisticRegression model and using a Pipeline for streamlined processing.
 
-- Building a logistic regression model using JupyterNotebook(without PySpark):
-    ```python
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.model_selection import train_test_split
-    from sklearn.linear_model import LogisticRegression
+```
+from pyspark.ml.classification import LogisticRegression
+from pyspark.ml import Pipeline
 
-    vectorizer = TfidfVectorizer(stop_words='english')
-    X = vectorizer.fit_transform(df['course_title'])
-    y = df['subject']
-    
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-    
-    model = LogisticRegression()
-    model.fit(X_train, y_train)
-    
-    predictions = model.predict(X_test)
-    ```
+lr = LogisticRegression(featuresCol='vectorizedFeatures', labelCol='label')
+pipeline = Pipeline(stages=[tokenizer, stopwords_remover, vectorizer, idf, lr])
 
+lr_model = pipeline.fit(trainDF)
+predictions = lr_model.transform(testDF)
+predictions.select('rawPrediction', 'probability', 'subject', 'label', 'prediction').show(10)
+```
 
+- In scikit-learn, the model training process is straightforward, fitting the model directly to the training data.
+```
+from sklearn.linear_model import LogisticRegression
+
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+predictions = model.predict(X_test)
+This structure highlights the differences in approach between PySpark and scikit-learn for each step of the text multi-classification process. Let me know if you need any further adjustments!
+```
 ### 6. Model Evaluation
 
 - Evaluating the model's performance using metrics like accuracy, precision, recall, and F1 score helps gauge its effectiveness in classifying the course titles.
@@ -238,7 +266,7 @@ The dataset used in this project consists of course information from Udemy, incl
     print("Recall:", lr_metric.recall(1.0))
     print("F1Score:", lr_metric.fMeasure(1.0))
     ```
-- Evaluating model performance using Jupyter(without PySpark):
+- Evaluating model performance using Scikit-learn(without PySpark):
     ```python
     from sklearn.metrics import confusion_matrix, classification_report
 
@@ -253,8 +281,8 @@ The dataset used in this project consists of course information from Udemy, incl
 **Inference from Results**
 - The high accuracy of over 90% indicates that the model is effectively classifying course titles into their respective categories. Precision and recall scores suggest that the model not only identifies relevant classes well but also minimizes false positives. The F1 score reinforces the model's balance between precision and recall, making it reliable for practical use.
 
-**Inference from PySpark and Jupyter Notebook structure**
-- In summary, while both PySpark and Jupyter Notebook serve important roles in data science, they cater to different needs. PySpark excels in scalability and performance for large datasets, making it suitable for production-level applications, particularly when dealing with big data. In contrast, Jupyter Notebook provides an excellent environment for exploration and analysis with smaller datasets.
+**Inference from PySpark and JupyterNotebook/Scikit-learn structure**
+- In summary, while both PySpark and Jupyter Notebook/Scikit-learn serve important roles in data science, they cater to different needs. PySpark excels in scalability and performance for large datasets, making it suitable for production-level applications, particularly when dealing with big data. In contrast, Jupyter Notebook provides an excellent environment for exploration and analysis with smaller datasets.
 
 - Although PySpark and Jupyter Notebook can perform similar tasks, there are certain nuances in the code that users must adhere to when switching between the two. However, these nuances are not difficult to navigate. A person who is familiar with coding in Python in Jupyter Notebooks can certainly transition to using PySpark effectively. The framework's design and functionalities allow for seamless handling of big data, making it an invaluable tool for data scientists and engineers.
 
